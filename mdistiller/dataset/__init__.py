@@ -1,3 +1,4 @@
+from .babypose import BabyPoseDataset
 from .cifar100 import get_cifar100_dataloaders, get_cifar100_dataloaders_sample
 from .imagenet import get_imagenet_dataloaders, get_imagenet_dataloaders_sample
 from .tiny_imagenet import get_tinyimagenet_dataloader, get_tinyimagenet_dataloader_sample
@@ -50,6 +51,43 @@ def get_dataset(cfg):
                 num_workers=cfg.DATASET.NUM_WORKERS,
             )
         num_classes = 200
+    elif cfg.DATASET.DATASET == "babypose":
+        import torch
+        import torchvision.transforms as transforms
+        
+        normalize = transforms.Normalize(
+            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+        )
+        train_dataset = BabyPoseDataset(
+            cfg, cfg.DATASET.ROOT, cfg.DATASET.TRAIN_SET, True,
+            transforms.Compose([
+                transforms.ToTensor(),
+                normalize,
+            ])
+        )
+        valid_dataset = BabyPoseDataset(
+            cfg, cfg.DATASET.ROOT, cfg.DATASET.TEST_SET, False,
+            transforms.Compose([
+                transforms.ToTensor(),
+                normalize,
+            ])
+        )
+        train_loader = torch.utils.data.DataLoader(
+            train_dataset,
+            batch_size=cfg.TRAIN.BATCH_SIZE_PER_GPU*len(cfg.GPUS),
+            shuffle=cfg.TRAIN.SHUFFLE,
+            num_workers=cfg.WORKERS,
+            pin_memory=cfg.PIN_MEMORY
+        )
+        val_loader = torch.utils.data.DataLoader(
+            valid_dataset,
+            batch_size=cfg.TEST.BATCH_SIZE_PER_GPU*len(cfg.GPUS),
+            shuffle=False,
+            num_workers=cfg.WORKERS,
+            pin_memory=cfg.PIN_MEMORY
+        )
+        num_data = None
+        num_classes = None
     else:
         raise NotImplementedError(cfg.DATASET.TYPE)
 
