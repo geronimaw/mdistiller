@@ -6,7 +6,7 @@ import torch.backends.cudnn as cudnn
 
 cudnn.benchmark = True
 
-from mdistiller.models import cifar_model_dict, imagenet_model_dict, tiny_imagenet_model_dict
+from mdistiller.models import cifar_model_dict, imagenet_model_dict, tiny_imagenet_model_dict, get_pose_net
 from mdistiller.distillers import distiller_dict
 from mdistiller.dataset import get_dataset
 from mdistiller.engine.utils import load_checkpoint, log_msg
@@ -45,6 +45,8 @@ def main(cfg, resume, opts):
             model_student = imagenet_model_dict[cfg.DISTILLER.STUDENT](pretrained=False)
         elif cfg.DATASET.TYPE == "tiny_imagenet":
             model_student = tiny_imagenet_model_dict[cfg.DISTILLER.STUDENT][0](num_classes=num_classes)
+        elif cfg.DATASET.DATASET == "babypose":
+            model_student = get_pose_net(cfg.DISTILLER.STUDENT)
         else:
             model_student = cifar_model_dict[cfg.DISTILLER.STUDENT][0](
                 num_classes=num_classes
@@ -56,6 +58,9 @@ def main(cfg, resume, opts):
         if cfg.DATASET.TYPE == "imagenet":
             model_teacher = imagenet_model_dict[cfg.DISTILLER.TEACHER](pretrained=True)
             model_student = imagenet_model_dict[cfg.DISTILLER.STUDENT](pretrained=False)
+        elif cfg.DATASET.DATASET == "babypose":
+            model_student = get_pose_net(cfg, is_train=True)
+            model_teacher = get_pose_net(cfg, is_train=False) 
         else:
             model_dict = tiny_imagenet_model_dict if cfg.DATASET.TYPE == "tiny_imagenet" else cifar_model_dict
             net, pretrain_model_path = model_dict[cfg.DISTILLER.TEACHER]
@@ -71,6 +76,9 @@ def main(cfg, resume, opts):
             distiller = distiller_dict[cfg.DISTILLER.TYPE](
                 model_student, model_teacher, cfg, num_data
             )
+        elif cfg.DISTILLER.TYPE == "HROKD":
+            distiller = distiller_dict[cfg.DISTILLER.TYPE](
+                model_student, model_teacher, cfg)
         else:
             distiller = distiller_dict[cfg.DISTILLER.TYPE](
                 model_student, model_teacher, cfg
