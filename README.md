@@ -8,6 +8,9 @@ This repo is
 
 (3) the official implementation of the ICCV-2023 paper: [DOT: A Distillation-Oriented Trainer](https://openaccess.thecvf.com/content/ICCV2023/papers/Zhao_DOT_A_Distillation-Oriented_Trainer_ICCV_2023_paper.pdf).
 
+# MISSING:
+# (1) ./download_ckpt: folder with pretrained nets
+# (2) ./data/babypose
 
 # DOT: A Distillation-Oriented Trainer
 
